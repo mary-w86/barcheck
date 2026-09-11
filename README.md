@@ -29,7 +29,7 @@ Build it:
 go build -o barcheck .
 ```
 
-Run it against one or more files:
+Run it against one or more files, directories, or glob patterns:
 
 ```
 $ cat catalog.txt
@@ -42,9 +42,13 @@ catalog.txt:2:10: ISBN-13 checksum mismatch: expected check digit 0 ("978-0-13-4
 catalog.txt:3:10: ISBN-10 checksum ok ("0-13-419044-0")
 ```
 
-Exit status is non-zero if any file couldn't be read, or if any code
-failed its checksum - so `barcheck` can be dropped into a pre-commit hook
-or CI step against a data file.
+A directory argument is scanned recursively, skipping hidden directories
+like `.git`. A glob pattern such as `catalogs/*.csv` is expanded before
+scanning; quote it if you don't want your shell to expand it first.
+
+Exit status is non-zero if any path couldn't be resolved or read, or if
+any code failed its checksum - so `barcheck` can be dropped into a
+pre-commit hook or CI step against a data file.
 
 ### JSON output
 
@@ -85,5 +89,5 @@ code, without having to parse the text output.
 
 ## What it doesn't do yet
 
-No recursive directory walking, no ISSN or ISMN support, no way to
-suppress a false positive inline. See the code for where those would go.
+No ISSN or ISMN support, no way to suppress a false positive inline. See
+the code for where those would go.

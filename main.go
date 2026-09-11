@@ -15,19 +15,26 @@ func main() {
 	jsonOut := flag.Bool("json", false, "emit findings as a JSON array instead of plain text")
 	quiet := flag.Bool("quiet", false, "in text mode, only print codes that fail their checksum")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [--json] [--quiet] file [file ...]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "usage: %s [--json] [--quiet] path [path ...]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "each path may be a file, a directory (scanned recursively), or a glob pattern\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
-	paths := flag.Args()
-	if len(paths) == 0 {
+	patterns := flag.Args()
+	if len(patterns) == 0 {
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	var all []Finding
+	paths, resolveErrs := resolvePaths(patterns)
 	hadError := false
+	for _, err := range resolveErrs {
+		fmt.Fprintf(os.Stderr, "barcheck: %v\n", err)
+		hadError = true
+	}
+
+	var all []Finding
 	for _, path := range paths {
 		f, err := os.Open(path)
 		if err != nil {
