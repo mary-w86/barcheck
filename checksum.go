@@ -1,26 +1,43 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Kind identifies which checksum scheme a candidate code belongs to,
-// decided purely by its digit count once separators are stripped.
+// decided by its digit count (and, for the 13-digit case, its prefix)
+// once separators are stripped.
 type Kind string
 
 const (
+	KindISSN   Kind = "ISSN"
 	KindISBN10 Kind = "ISBN-10"
-	KindISBN13 Kind = "ISBN-13"
 	KindUPCA   Kind = "UPC-A"
+	KindISBN13 Kind = "ISBN-13"
+	KindISMN   Kind = "ISMN"
 )
 
-// classify returns the Kind that matches the length of a cleaned code,
-// or "" if the length doesn't correspond to a scheme we check.
+// ismnPrefix is the fixed prefix every 13-digit ISMN carries. It's what
+// distinguishes an ISMN from an ISBN-13/EAN-13 of the same length - the
+// checksum algorithm underneath is identical, so length alone can't tell
+// them apart.
+const ismnPrefix = "9790"
+
+// classify returns the Kind that matches a cleaned code, or "" if it
+// doesn't correspond to a scheme we check.
 func classify(clean string) Kind {
 	switch len(clean) {
+	case 8:
+		return KindISSN
 	case 10:
 		return KindISBN10
 	case 12:
 		return KindUPCA
 	case 13:
+		if strings.HasPrefix(clean, ismnPrefix) {
+			return KindISMN
+		}
 		return KindISBN13
 	default:
 		return ""
@@ -33,15 +50,45 @@ func classify(clean string) Kind {
 // callers can build a useful message ("X" for ISBN-10 checksum 10).
 func checkDigit(kind Kind, clean string) (want string, ok bool, err error) {
 	switch kind {
+	case KindISSN:
+		return checkISSN(clean)
 	case KindISBN10:
 		return checkISBN10(clean)
 	case KindISBN13:
 		return checkISBN13(clean)
+	case KindISMN:
+		return checkISMN(clean)
 	case KindUPCA:
 		return checkUPCA(clean)
 	default:
 		return "", false, fmt.Errorf("unknown kind %q", kind)
 	}
+}
+
+// checkISSN implements the ISSN check: the same weighted-sum-mod-11 idea
+// as ISBN-10, but over 8 characters (7 body digits plus a check digit)
+// with weights running 8 down to 2. Like ISBN-10, a check value of 10 is
+// written as X rather than as two digits.
+func checkISSN(clean string) (string, bool, error) {
+	if len(clean) != 8 {
+		return "", false, fmt.Errorf("ISSN needs 8 characters, got %d", len(clean))
+	}
+	sum := 0
+	for i := 0; i < 7; i++ {
+		d := clean[i]
+		if d < '0' || d > '9' {
+			return "", false, fmt.Errorf("non-digit %q in ISSN body", d)
+		}
+		sum += int(d-'0') * (8 - i)
+	}
+	rem := sum % 11
+	wantVal := (11 - rem) % 11
+	want := fmt.Sprintf("%d", wantVal)
+	if wantVal == 10 {
+		want = "X"
+	}
+	last := string(clean[7])
+	return want, last == want, nil
 }
 
 // checkISBN10 implements the ISO 2108 check: digits weighted 10 down to 1,
@@ -81,6 +128,13 @@ func checkISBN13(clean string) (string, bool, error) {
 
 func checkUPCA(clean string) (string, bool, error) {
 	return checkMod10(clean, 12, 3)
+}
+
+// checkISMN covers the current 13-digit ISMN format, which is really an
+// EAN-13 with the fixed prefix 9790: the checksum math is identical to
+// ISBN-13, it's only classify() that tells the two apart.
+func checkISMN(clean string) (string, bool, error) {
+	return checkMod10(clean, 13, 1)
 }
 
 func checkMod10(clean string, length, firstWeight int) (string, bool, error) {

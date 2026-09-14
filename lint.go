@@ -20,10 +20,11 @@ type Finding struct {
 	Message string `json:"message"`
 }
 
-// candidateRe looks for digit runs that are plausibly a barcode: 10 to 13
-// digits, allowing hyphens or spaces as separators and a trailing X for
-// ISBN-10. It's deliberately loose; classify() and the checksum functions
-// do the real filtering by length and by whether the checksum makes sense.
+// candidateRe looks for digit runs that are plausibly a barcode or serial
+// number - 8, 10, 12, or 13 digits - allowing hyphens or spaces as
+// separators and a trailing X for ISBN-10 or ISSN. It's deliberately
+// loose; classify() and the checksum functions do the real filtering by
+// length and by whether the checksum makes sense.
 var candidateRe = regexp.MustCompile(`\b[0-9](?:[0-9]|[- ](?=[0-9]))*[0-9Xx]\b`)
 
 // clean strips separators and upper-cases any trailing X, turning a raw

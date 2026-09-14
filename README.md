@@ -12,14 +12,18 @@ This tool finds those numbers and runs the checksum for you.
 
 ## What it checks
 
+- **ISSN** - the serials equivalent of ISBN-10: 8 characters, weighted
+  sum mod 11, check digit can be `X`.
 - **ISBN-10** - ISO 2108, weighted sum mod 11, check digit can be `X`.
 - **ISBN-13 / EAN-13** - GS1 mod-10, alternating weights of 1 and 3.
 - **UPC-A** - the same mod-10 algorithm, one digit shorter and out of
   phase with EAN-13 (a UPC-A is an EAN-13 with an implied leading zero).
+- **ISMN** - the current 13-digit format, always prefixed `9790`. Same
+  GS1 mod-10 math as ISBN-13; the prefix is what tells the two apart.
 
-Any digit run in the input that's 10, 12, or 13 digits long (hyphens and
-spaces as separators are allowed and ignored) is treated as a candidate
-and checked. Shorter or longer runs are left alone.
+Any digit run in the input that's 8, 10, 12, or 13 digits long (hyphens
+and spaces as separators are allowed and ignored) is treated as a
+candidate and checked. Shorter or longer runs are left alone.
 
 ## Usage
 
@@ -89,5 +93,5 @@ code, without having to parse the text output.
 
 ## What it doesn't do yet
 
-No ISSN or ISMN support, no way to suppress a false positive inline. See
-the code for where those would go.
+No way to suppress a false positive inline, and no tests yet beyond
+manual runs. See the code for where those would go.
