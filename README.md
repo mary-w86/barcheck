@@ -91,7 +91,17 @@ code, without having to parse the text output.
 - `--quiet` - in text mode, only print codes that failed their checksum
   (valid codes are still counted for the exit status either way).
 
+### Suppressing false positives
+
+Some digit runs match a scheme's length by coincidence - a phone number,
+a build number, an internal SKU - without being an actual ISBN or
+barcode. Put `barcheck:ignore` anywhere on the line and every finding on
+that line is skipped:
+
+```
+Support: 1-800-306-40615  barcheck:ignore
+```
+
 ## What it doesn't do yet
 
-No way to suppress a false positive inline, and no tests yet beyond
-manual runs. See the code for where those would go.
+No tests yet beyond manual runs. See the code for where those would go.

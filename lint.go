@@ -27,6 +27,13 @@ type Finding struct {
 // length and by whether the checksum makes sense.
 var candidateRe = regexp.MustCompile(`\b[0-9](?:[0-9]|[- ](?=[0-9]))*[0-9Xx]\b`)
 
+// ignoreDirective, when present anywhere on a line, suppresses every
+// finding on that line. It's meant for numbers that only look like a
+// barcode - a phone number, a build ID, a coincidentally-valid-length
+// serial - and would otherwise show up as noise (or, worse, a mismatch)
+// on every run.
+const ignoreDirective = "barcheck:ignore"
+
 // clean strips separators and upper-cases any trailing X, turning a raw
 // match like "978-0-306-40615-7" into "9780306406157".
 func clean(raw string) string {
@@ -57,6 +64,9 @@ func Lint(r io.Reader, name string) []Finding {
 	for scanner.Scan() {
 		lineNo++
 		line := scanner.Text()
+		if strings.Contains(line, ignoreDirective) {
+			continue
+		}
 		for _, loc := range candidateRe.FindAllStringIndex(line, -1) {
 			raw := line[loc[0]:loc[1]]
 			code := clean(raw)
