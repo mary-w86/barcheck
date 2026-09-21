@@ -104,4 +104,5 @@ Support: 1-800-306-40615  barcheck:ignore
 
 ## What it doesn't do yet
 
-No tests yet beyond manual runs. See the code for where those would go.
+No packaging yet - build it yourself with `go build`. A goreleaser config
+or Homebrew tap would be the natural next step.
